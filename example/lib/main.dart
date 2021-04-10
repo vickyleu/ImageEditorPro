@@ -49,7 +49,7 @@ class _HomePageState extends State<HomePage> {
             isFalse: Image.file(_image).toCenter())
         .xScaffold(
             appBar:
-                'Image Editor Pro example'.textMaterialColorWhite().xAppBar(),
+                'Image Editor Pro example'.xTextColorWhite().xAppBar(),
             floatingActionButton:
                 Icons.add.xIcons().xFloationActiobButton(color: Colors.red));
   }
