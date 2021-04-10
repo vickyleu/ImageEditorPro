@@ -19,42 +19,24 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  File _image;
-
-  Future<void> getimageditor() =>
-      Navigator.push(context, MaterialPageRoute(builder: (context) {
-        return ImageEditorPro(
-          appBarColor: Colors.blue,
-          bottomBarColor: Colors.blue,
-        );
-      })).then((geteditimage) {
-        if (geteditimage != null) {
-          setState(() {
-            _image = geteditimage;
-          });
-        }
-      }).catchError((er) {
-        print(er);
-      });
 
   @override
   Widget build(BuildContext context) {
-    return condition(
-            condtion: _image == null,
-            isTue: 'Open Editor'.text().xRaisedButton(
-              onPressed: () {
-                getimageditor();
-              },
-            ).toCenter(),
-            isFalse: Image.file(_image).toCenter())
-        .xScaffold(
+    return buildCenter().xScaffold(
             appBar:
                 'Image Editor Pro example'.xTextColorWhite().xAppBar(),
             floatingActionButton:
                 Icons.add.xIcons().xFloationActiobButton(color: Colors.red));
   }
+
+  Widget buildCenter(){
+    return SafeArea(child: Stack(
+      children: [
+        Image.network("https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=2194302503,949681687&fm=26&gp=0.jpg").toCenter(),
+        ImageEditorPro()
+      ],
+    ),top: false,);
+  }
 }
 
-Widget condition({bool condtion, Widget isTue, Widget isFalse}) {
-  return condtion ? isTue : isFalse;
-}
+
