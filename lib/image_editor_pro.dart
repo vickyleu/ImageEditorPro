@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_editor_pro/modules/all_emojies.dart';
@@ -26,18 +25,11 @@ List multiwidget = [];
 Color currentcolors = Colors.white;
 var opicity = 0.0;
 
-
-
 class ImageEditorPro extends StatefulWidget {
   final Color appBarColor;
   final Color bottomBarColor;
+
   ImageEditorPro({this.appBarColor, this.bottomBarColor});
-
-  GestureWhiteboardController _controller = GestureWhiteboardController()
-    ..brushSize = (5)
-    ..eraserSize = (25)
-    ..brushColor = Color(0XFFFF6666);
-
 
   @override
   _ImageEditorProState createState() => _ImageEditorProState();
@@ -49,12 +41,15 @@ class _ImageEditorProState extends State<ImageEditorPro> {
   // create some values
   Color pickerColor = Color(0xff443a49);
   Color currentColor = Color(0xff443a49);
+  GestureWhiteboardController _controller = GestureWhiteboardController()
+    ..brushSize = (5)
+    ..eraserSize = (25)
+    ..brushColor = Color(0XFFFF6666);
 
 // ValueChanged<Color> callback
   void changeColor(Color color) {
     setState(() => pickerColor = color);
-    var points = widget._controller.draw;
-    widget._controller.brushColor = color;
+    _controller?.brushColor = color;
   }
 
   List<Offset> offsets = [];
@@ -70,24 +65,14 @@ class _ImageEditorProState extends State<ImageEditorPro> {
   final GlobalKey globalKey = GlobalKey();
   File _image;
   ScreenshotController screenshotController = ScreenshotController();
-  Timer timeprediction;
-  void timers() {
-    Timer.periodic(Duration(milliseconds: 10), (tim) {
-      timeprediction = tim;
-    });
-  }
 
   @override
   void dispose() {
-    timeprediction.cancel();
-
     super.dispose();
   }
 
   @override
   void initState() {
-    timers();
-    widget._controller.wipe();
     type.clear();
     fontsize.clear();
     offsets.clear();
@@ -95,6 +80,11 @@ class _ImageEditorProState extends State<ImageEditorPro> {
     howmuchwidgetis = 0;
 
     super.initState();
+  }
+  static Future<Directory> getAppDirectory() async {
+    return Platform.isIOS
+        ? await getApplicationDocumentsDirectory()
+        : await getExternalStorageDirectory();
   }
 
   @override
@@ -115,15 +105,16 @@ class _ImageEditorProState extends State<ImageEditorPro> {
                 onPressed: () {
                   screenshotController
                       .capture(
-                      delay: Duration(milliseconds: 500), pixelRatio: 1.5)
+                          delay: Duration(milliseconds: 500), pixelRatio: 1.5)
                       .then((File image) async {
-                    //print("Capture Done");
+                    print("Capture Done");
 
-                    final paths = await getExternalStorageDirectory();
+                    final paths = await getAppDirectory();
                     await image.copy(paths.path +
                         '/' +
                         DateTime.now().millisecondsSinceEpoch.toString() +
                         '.png');
+                    //TODO 这里获取到图片了,通过路由返回
                     Navigator.pop(context, image);
                   }).catchError((onError) {
                     print(onError);
@@ -136,226 +127,233 @@ class _ImageEditorProState extends State<ImageEditorPro> {
           child: Screenshot(
             controller: screenshotController,
             child: Container(
-              margin: EdgeInsets.all(0),
-              color: Colors.white,
-              child:LayoutBuilder(
-                builder: (context,cc){
-                  return RepaintBoundary(
-                      key: globalKey,
-                      child: Stack(
-                        children: <Widget>[
-                          _image != null
-                              ? Image.file(
-                            _image,
-                            height: cc.maxHeight.toDouble(),
-                            width: cc.maxWidth.toDouble(),
-                            fit: BoxFit.cover,
-                          )
-                              : Container(),
-                          Container(
-                            child: GestureDetector(
-                                onPanUpdate: (DragUpdateDetails details) {
-                                  setState(() {
-                                    RenderBox object = context.findRenderObject();
-                                    var _localPosition = object
-                                        .globalToLocal(details.globalPosition);
-                                    _points = List.from(_points)
-                                      ..add(_localPosition);
-                                  });
-                                },
-                                onPanEnd: (DragEndDetails details) {
-                                  _points.add(null);
-                                },
-                                child: Signat(widget._controller,cc)),
-                          ),
-                          Stack(
-                            children: multiwidget.asMap().entries.map((f) {
-                              return type[f.key] == 1
-                                  ? EmojiView(
-                                left: offsets[f.key].dx,
-                                top: offsets[f.key].dy,
-                                ontap: () {
-                                  scaf.currentState
-                                      .showBottomSheet((context) {
-                                    return Sliders(
-                                      size: f.key,
-                                      sizevalue: fontsize[f.key].toDouble(),
-                                    );
-                                  });
-                                },
-                                onpanupdate: (details) {
-                                  setState(() {
-                                    offsets[f.key] = Offset(
-                                        offsets[f.key].dx + details.delta.dx,
-                                        offsets[f.key].dy + details.delta.dy);
-                                  });
-                                },
-                                value: f.value.toString(),
-                                fontsize: fontsize[f.key].toDouble(),
-                                align: TextAlign.center,
-                              )
-                                  : type[f.key] == 2
-                                  ? TextView(
-                                left: offsets[f.key].dx,
-                                top: offsets[f.key].dy,
-                                ontap: () {
-                                  scaf.currentState
-                                      .showBottomSheet((context) {
-                                    return Sliders(
-                                      size: f.key,
-                                      sizevalue:
-                                      fontsize[f.key].toDouble(),
-                                    );
-                                  });
-                                },
-                                onpanupdate: (details) {
-                                  setState(() {
-                                    offsets[f.key] = Offset(
-                                        offsets[f.key].dx +
-                                            details.delta.dx,
-                                        offsets[f.key].dy +
-                                            details.delta.dy);
-                                  });
-                                },
-                                value: f.value.toString(),
-                                fontsize: fontsize[f.key].toDouble(),
-                                align: TextAlign.center,
-                              )
-                                  : Container();
-                            }).toList(),
-                          )
-                        ],
-                      ));
-                },
-              )
-            ),
+                margin: EdgeInsets.all(0),
+                color: Colors.white,
+                child: LayoutBuilder(
+                  builder: (context, cc) {
+                    print("嘿嘿嘿  ${_controller.hashCode}");
+                    return RepaintBoundary(
+                        key: globalKey,
+                        child: Stack(
+                          children: <Widget>[
+                            _image != null
+                                ? Image.file(
+                                    _image,
+                                    height: cc.maxHeight.toDouble(),
+                                    width: cc.maxWidth.toDouble(),
+                                    fit: BoxFit.cover,
+                                  )
+                                : Container(),
+                            Container(
+                              color: Colors.white,
+                              height: cc.maxHeight,
+                              width: cc.maxWidth,
+                              child: GestureDetector(
+                                  onPanUpdate: (DragUpdateDetails details) {
+                                    setState(() {
+                                      RenderBox object =
+                                          context.findRenderObject();
+                                      var _localPosition = object.globalToLocal(
+                                          details.globalPosition);
+                                      _points = List.from(_points)
+                                        ..add(_localPosition);
+                                    });
+                                  },
+                                  onPanEnd: (DragEndDetails details) {
+                                    _points.add(null);
+                                  },
+                                  child: () sync* {
+                                    yield Signat(_controller, cc);
+                                  }()
+                                      .last),
+                            ),
+                            Stack(
+                              children: multiwidget.asMap().entries.map((f) {
+                                return type[f.key] == 1
+                                    ? EmojiView(
+                                        left: offsets[f.key].dx,
+                                        top: offsets[f.key].dy,
+                                        ontap: () {
+                                          scaf.currentState
+                                              .showBottomSheet((context) {
+                                            return Sliders(
+                                              size: f.key,
+                                              sizevalue:
+                                                  fontsize[f.key].toDouble(),
+                                            );
+                                          });
+                                        },
+                                        onpanupdate: (details) {
+                                          setState(() {
+                                            offsets[f.key] = Offset(
+                                                offsets[f.key].dx +
+                                                    details.delta.dx,
+                                                offsets[f.key].dy +
+                                                    details.delta.dy);
+                                          });
+                                        },
+                                        value: f.value.toString(),
+                                        fontsize: fontsize[f.key].toDouble(),
+                                        align: TextAlign.center,
+                                      )
+                                    : type[f.key] == 2
+                                        ? TextView(
+                                            left: offsets[f.key].dx,
+                                            top: offsets[f.key].dy,
+                                            ontap: () {
+                                              scaf.currentState
+                                                  .showBottomSheet((context) {
+                                                return Sliders(
+                                                  size: f.key,
+                                                  sizevalue: fontsize[f.key]
+                                                      .toDouble(),
+                                                );
+                                              });
+                                            },
+                                            onpanupdate: (details) {
+                                              setState(() {
+                                                offsets[f.key] = Offset(
+                                                    offsets[f.key].dx +
+                                                        details.delta.dx,
+                                                    offsets[f.key].dy +
+                                                        details.delta.dy);
+                                              });
+                                            },
+                                            value: f.value.toString(),
+                                            fontsize:
+                                                fontsize[f.key].toDouble(),
+                                            align: TextAlign.center,
+                                          )
+                                        : Container();
+                              }).toList(),
+                            )
+                          ],
+                        ));
+                  },
+                )),
           ),
         ),
         bottomNavigationBar: openbottomsheet
             ? Container()
             : Container(
-          decoration: BoxDecoration(
-              color: widget.bottomBarColor,
-              boxShadow: [BoxShadow(blurRadius: 10.9)]),
-          height: 70,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: <Widget>[
-              BottomBarContainer(
-                colors: widget.bottomBarColor,
-                icons: FontAwesomeIcons.brush,
-                ontap: () {
-                  // raise the [showDialog] widget
-                  showDialog(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        title: const Text('Pick a color!'),
-                        content: SingleChildScrollView(
-                          child: ColorPicker(
-                            pickerColor: pickerColor,
-                            onColorChanged: changeColor,
-                            showLabel: true,
-                            pickerAreaHeightPercent: 0.8,
-                          ),
-                        ),
-                        actions: <Widget>[
-                          FlatButton(
-                            child: const Text('Got it'),
-                            onPressed: () {
-                              setState(() => currentColor = pickerColor);
-                              widget._controller.setErase(false);
-                              Navigator.of(context).pop();
-                            },
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-                title: 'Brush',
-              ),
-              BottomBarContainer(
-                icons: Icons.text_fields,
-                ontap: () async {
-                  widget._controller.setErase(false);
-                  final value = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => TextEditor()));
-                  if (value.toString().isEmpty) {
-                    print('true');
-                  } else {
-                    type.add(2);
-                    fontsize.add(20);
-                    offsets.add(Offset.zero);
-                    multiwidget.add(value);
-                    howmuchwidgetis++;
-                  }
-                },
-                title: 'Text',
-              ),
-
-
-              BottomBarContainer(
-                icons: FontAwesomeIcons.eraser,
-                ontap: () {
-                  widget._controller.setErase(true);
-                },
-                title: 'Eraser',
-              ),
-
-              BottomBarContainer(
-                icons: FontAwesomeIcons.eraser,
-                ontap: () {
-                  widget._controller.setErase(false);
-                  widget._controller.wipe();
-                  type.clear();
-                  fontsize.clear();
-                  offsets.clear();
-                  multiwidget.clear();
-                  howmuchwidgetis = 0;
-                },
-                title: 'Wipe',
-              ),
-
-
-              BottomBarContainer(
-                icons: Icons.photo,
-                ontap: () {
-                  widget._controller.setErase(false);
-                  showModalBottomSheet(
-                      context: context,
-                      builder: (context) {
-                        return ColorPiskersSlider();
-                      });
-                },
-                title: 'Filter',
-              ),
-              BottomBarContainer(
-                icons: FontAwesomeIcons.smile,
-                ontap: () {
-                  widget._controller.setErase(false);
-                  var getemojis = showModalBottomSheet(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return Emojies();
-                      });
-                  getemojis.then((value) {
-                    if (value != null) {
-                      type.add(1);
-                      fontsize.add(20);
-                      offsets.add(Offset.zero);
-                      multiwidget.add(value);
-                      howmuchwidgetis++;
-                    }
-                  });
-                },
-                title: 'Emoji',
-              ),
-            ],
-          ),
-        ));
+                decoration: BoxDecoration(
+                    color: widget.bottomBarColor,
+                    boxShadow: [BoxShadow(blurRadius: 10.9)]),
+                height: 70,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: <Widget>[
+                    BottomBarContainer(
+                      colors: widget.bottomBarColor,
+                      icons: FontAwesomeIcons.brush,
+                      ontap: () {
+                        _controller?.setErase(false);
+                        // raise the [showDialog] widget
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: const Text('Pick a color!'),
+                              content: SingleChildScrollView(
+                                child: ColorPicker(
+                                  pickerColor: pickerColor,
+                                  onColorChanged: changeColor,
+                                  showLabel: true,
+                                  pickerAreaHeightPercent: 0.8,
+                                ),
+                              ),
+                              actions: <Widget>[
+                                FlatButton(
+                                  child: const Text('Got it'),
+                                  onPressed: () {
+                                    setState(() => currentColor = pickerColor);
+                                    _controller?.setErase(false);
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                      title: 'Brush',
+                    ),
+                    BottomBarContainer(
+                      icons: Icons.text_fields,
+                      ontap: () async {
+                        _controller?.setErase(false);
+                        final value = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => TextEditor()));
+                        if (value.toString().isEmpty) {
+                          print('true');
+                        } else {
+                          type.add(2);
+                          fontsize.add(20);
+                          offsets.add(Offset.zero);
+                          multiwidget.add(value);
+                          howmuchwidgetis++;
+                        }
+                      },
+                      title: 'Text',
+                    ),
+                    BottomBarContainer(
+                      icons: FontAwesomeIcons.eraser,
+                      ontap: () {
+                        _controller?.setErase(true);
+                      },
+                      title: 'Eraser',
+                    ),
+                    BottomBarContainer(
+                      icons: FontAwesomeIcons.eraser,
+                      ontap: () {
+                        _controller?.setErase(false);
+                        _controller?.wipe();
+                        type.clear();
+                        fontsize.clear();
+                        offsets.clear();
+                        multiwidget.clear();
+                        howmuchwidgetis = 0;
+                      },
+                      title: 'Wipe',
+                    ),
+                    BottomBarContainer(
+                      icons: Icons.photo,
+                      ontap: () {
+                        _controller?.setErase(false);
+                        showModalBottomSheet(
+                            context: context,
+                            builder: (context) {
+                              return ColorPiskersSlider();
+                            });
+                      },
+                      title: 'Filter',
+                    ),
+                    BottomBarContainer(
+                      icons: FontAwesomeIcons.smile,
+                      ontap: () {
+                        _controller?.setErase(false);
+                        var getemojis = showModalBottomSheet(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return Emojies();
+                            });
+                        getemojis.then((value) {
+                          if (value != null) {
+                            type.add(1);
+                            fontsize.add(20);
+                            offsets.add(Offset.zero);
+                            multiwidget.add(value);
+                            howmuchwidgetis++;
+                          }
+                        });
+                      },
+                      title: 'Emoji',
+                    ),
+                  ],
+                ),
+              ));
   }
 
   final picker = ImagePicker();
@@ -398,15 +396,15 @@ class _ImageEditorProState extends State<ImageEditorPro> {
                                     var image = await picker.getImage(
                                         source: ImageSource.gallery);
                                     var decodedImage =
-                                    await decodeImageFromList(
-                                        File(image.path).readAsBytesSync());
+                                        await decodeImageFromList(
+                                            File(image.path).readAsBytesSync());
 
                                     setState(() {
                                       // height = decodedImage.height;
                                       // width = decodedImage.width;
                                       _image = File(image.path);
                                     });
-                                    setState(() => widget._controller.wipe());
+                                    setState(() => _controller?.wipe());
                                     Navigator.pop(context);
                                   }),
                               SizedBox(width: 10),
@@ -435,7 +433,7 @@ class _ImageEditorProState extends State<ImageEditorPro> {
                                     // width = decodedImage.width;
                                     _image = File(image.path);
                                   });
-                                  setState(() => widget._controller.wipe());
+                                  setState(() => _controller?.wipe());
                                   Navigator.pop(context);
                                 }),
                             SizedBox(width: 10),
@@ -464,7 +462,9 @@ class _ImageEditorProState extends State<ImageEditorPro> {
 class Signat extends StatefulWidget {
   final GestureWhiteboardController _controller;
   final BoxConstraints cc;
+
   Signat(this._controller, this.cc);
+
   @override
   _SignatState createState() => _SignatState();
 }
@@ -478,24 +478,26 @@ class _SignatState extends State<Signat> {
   @override
   Widget build(BuildContext context) {
     return //SIGNATURE CANVAS
-      //SIGNATURE CANVAS
-      ListView(
-        children: <Widget>[
-          Container(
-            child:Signature(
-                controller: widget._controller,
-                height: widget.cc.maxHeight.toDouble(),
-                width: widget.cc.maxWidth.toDouble()),
-          ),
-        ],
-      );
+        //SIGNATURE CANVAS
+        ListView(
+      children: <Widget>[
+        Container(
+          child: Signature(
+              controller: widget._controller,
+              height: widget.cc.maxHeight.toDouble(),
+              width: widget.cc.maxWidth.toDouble()),
+        ),
+      ],
+    );
   }
 }
 
 class Sliders extends StatefulWidget {
   final int size;
   final sizevalue;
+
   const Sliders({Key key, this.size, this.sizevalue}) : super(key: key);
+
   @override
   _SlidersState createState() => _SlidersState();
 }
