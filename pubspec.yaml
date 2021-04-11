@@ -19,9 +19,8 @@ dependencies:
   dio: ^3.0.10
   screenshot: ^0.2.0
   signature:
-    path: /Users/vickyleu/Develop/GitRepo/signature
-#      git:
-#        url: https://github.com/vickyleu/signature.git
+      git:
+        url: https://github.com/vickyleu/signature.git
   flutter_colorpicker: ^0.3.5
 
 dev_dependencies:
