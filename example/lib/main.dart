@@ -23,10 +23,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
-    return buildCenter().xScaffold(
-        appBar: 'Image Editor Pro example'.xTextColorWhite().xAppBar(),
-        floatingActionButton:
-            Icons.add.xIcons().xFloationActiobButton(color: Colors.red));
+    return buildCenter().xScaffold();
   }
 
   File image;

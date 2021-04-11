@@ -26,10 +26,9 @@ Color currentcolors = Colors.white;
 var opicity = 0.0;
 
 class ImageEditorPro extends StatefulWidget {
-  final Color appBarColor;
   final Color bottomBarColor;
 
-  ImageEditorPro({this.appBarColor, this.bottomBarColor});
+  ImageEditorPro({this.bottomBarColor});
 
   @override
   _ImageEditorProState createState() => _ImageEditorProState();
@@ -121,7 +120,7 @@ class _ImageEditorProState extends State<ImageEditorPro> {
                   });
                 }),
           ],
-          backgroundColor: widget.appBarColor,
+          backgroundColor: Colors.black,
         ),
         body: Center(
           child: Screenshot(
