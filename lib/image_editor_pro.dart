@@ -46,6 +46,8 @@ class _ImageEditorProState extends State<ImageEditorPro> {
     ..eraserSize = (25)
     ..brushColor = Color(0XFFFF6666);
 
+  PersistentBottomSheetController _scfFutController;
+
 // ValueChanged<Color> callback
   void changeColor(Color color) {
     setState(() => pickerColor = color);
@@ -57,7 +59,6 @@ class _ImageEditorProState extends State<ImageEditorPro> {
   Offset offset2 = Offset.zero;
   final scaf = GlobalKey<ScaffoldState>();
   var openbottomsheet = false;
-  List<Offset> _points = <Offset>[];
   List type = [];
   List aligment = [];
 
@@ -149,79 +150,96 @@ class _ImageEditorProState extends State<ImageEditorPro> {
                               height: cc.maxHeight,
                               width: cc.maxWidth,
                               child: GestureDetector(
-                                  onPanUpdate: (DragUpdateDetails details) {
-                                    setState(() {
-                                      RenderBox object =
-                                      context.findRenderObject();
-                                      var _localPosition = object.globalToLocal(
-                                          details.globalPosition);
-                                      _points = List.from(_points)
-                                        ..add(_localPosition);
-                                    });
+                                  onPanUpdate: (DragUpdateDetails details) async {
+                                    if(_scfFutController!=null){
+                                      await _scfFutController.close();
+                                      _scfFutController=null;
+                                    }
+                                  },
+                                  onTap: () async {
+                                    if(_scfFutController!=null){
+                                     await _scfFutController.close();
+                                     _scfFutController=null;
+                                    }
                                   },
                                   onPanEnd: (DragEndDetails details) {
-                                    _points.add(null);
+
                                   },
-                                  child: () sync* {
-                                    yield Signat(_controller, cc);
-                                  }()
-                                      .last),
+                                  child: Signat(_controller, cc)
+                              ),
                             );
                             yield Container(
                               child: Stack(
                                 children: multiwidget.asMap().entries.map((f) {
                                   if (type[f.key] == 1) {
-                                    return EmojiView(
-                                      left: offsets[f.key].dx,
-                                      top: offsets[f.key].dy,
-                                      ontap: () {
-                                        scaf.currentState
-                                            .showBottomSheet((context) {
-                                          return Sliders(
-                                            size: f.key,
-                                            sizevalue: fontsize[f.key].toDouble(),
-                                          );
-                                        });
-                                      },
-                                      onpanupdate: (details) {
-                                        setState(() {
-                                          offsets[f.key] = Offset(
-                                              offsets[f.key].dx +
-                                                  details.delta.dx,
-                                              offsets[f.key].dy +
-                                                  details.delta.dy);
-                                        });
-                                      },
-                                      value: f.value.toString(),
-                                      fontsize: fontsize[f.key].toDouble(),
-                                      align: TextAlign.center,
-                                    );
+                                    StreamController<int> _stream=StreamController.broadcast();
+                                    return StreamBuilder(
+                                        stream: _stream.stream,
+                                        builder: (context,snap){
+                                      return EmojiView(
+                                        left: offsets[f.key].dx,
+                                        top: offsets[f.key].dy,
+                                        ontap: () async {
+                                          if(_scfFutController!=null){
+                                            await _scfFutController.close();
+                                            _scfFutController=null;
+                                          }
+                                          _scfFutController= scaf.currentState.showBottomSheet((context) {
+                                            return Sliders(
+                                              size: f.key,
+                                              sizevalue: fontsize[f.key].toDouble(), stream:_stream
+                                            );
+                                          });
+                                        },
+                                        onpanupdate: (details) {
+                                          setState(() {
+                                            offsets[f.key] = Offset(
+                                                offsets[f.key].dx +
+                                                    details.delta.dx,
+                                                offsets[f.key].dy +
+                                                    details.delta.dy);
+                                          });
+                                        },
+                                        value: f.value.toString(),
+                                        fontsize: fontsize[f.key].toDouble(),
+                                        align: TextAlign.center,
+                                      );
+                                    });
                                   } else if (type[f.key] == 2) {
-                                    return TextView(
-                                      left: offsets[f.key].dx,
-                                      top: offsets[f.key].dy,
-                                      ontap: () {
-                                        scaf.currentState
-                                            .showBottomSheet((context) {
-                                          return Sliders(
-                                            size: f.key,
-                                            sizevalue: fontsize[f.key].toDouble(),
+                                    StreamController<int> _stream=StreamController.broadcast();
+                                    return StreamBuilder(
+                                        stream: _stream.stream,
+                                        builder: (context,snap){
+                                          return TextView(
+                                            left: offsets[f.key].dx,
+                                            top: offsets[f.key].dy,
+                                            ontap: () async {
+                                              if(_scfFutController!=null){
+                                                await _scfFutController.close();
+                                                _scfFutController=null;
+                                              }
+                                              _scfFutController= scaf.currentState
+                                                  .showBottomSheet((context) {
+                                                return Sliders(
+                                                  size: f.key,
+                                                  sizevalue: fontsize[f.key].toDouble(), stream:_stream
+                                                );
+                                              });
+                                            },
+                                            onpanupdate: (details) {
+                                              setState(() {
+                                                offsets[f.key] = Offset(
+                                                    offsets[f.key].dx +
+                                                        details.delta.dx,
+                                                    offsets[f.key].dy +
+                                                        details.delta.dy);
+                                              });
+                                            },
+                                            value: f.value.toString(),
+                                            fontsize: fontsize[f.key].toDouble(),
+                                            align: TextAlign.center,
                                           );
                                         });
-                                      },
-                                      onpanupdate: (details) {
-                                        setState(() {
-                                          offsets[f.key] = Offset(
-                                              offsets[f.key].dx +
-                                                  details.delta.dx,
-                                              offsets[f.key].dy +
-                                                  details.delta.dy);
-                                        });
-                                      },
-                                      value: f.value.toString(),
-                                      fontsize: fontsize[f.key].toDouble(),
-                                      align: TextAlign.center,
-                                    );
                                   }
                                   return Container();
                                 }).toList(),
@@ -493,8 +511,8 @@ class _SignatState extends State<Signat> {
 class Sliders extends StatefulWidget {
   final int size;
   final sizevalue;
-
-  const Sliders({Key key, this.size, this.sizevalue}) : super(key: key);
+  final StreamController<int> stream;
+  const Sliders({Key key, this.size, this.sizevalue,this.stream}) : super(key: key);
 
   @override
   _SlidersState createState() => _SlidersState();
@@ -528,6 +546,7 @@ class _SlidersState extends State<Sliders> {
                 onChangeEnd: (v) {
                   setState(() {
                     fontsize[widget.size] = v.toInt();
+                    widget.stream.add(v.toInt());
                   });
                 },
                 onChanged: (v) {
