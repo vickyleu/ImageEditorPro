@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -108,16 +109,15 @@ class _ImageEditorProState extends State<ImageEditorPro> {
                   screenshotController
                       .capture(
                           delay: Duration(milliseconds: 500), pixelRatio: 1.5)
-                      .then((File image) async {
+                      .then((Uint8List image) async {
                     print("Capture Done");
-
                     final paths = await getAppDirectory();
-                    await image.copy(paths.path +
-                        '/' +
-                        DateTime.now().millisecondsSinceEpoch.toString() +
-                        '.png');
+                    final path="${paths.path}/${DateTime.now().millisecondsSinceEpoch.toString()}.png";
+                    final file = await new File('$path').create();
+                    await file.writeAsBytes(image);
+
                     //TODO 这里获取到图片了,通过路由返回
-                    Navigator.pop(context, image);
+                    Navigator.pop(context, file);
                   }).catchError((onError) {
                     print(onError);
                   });
